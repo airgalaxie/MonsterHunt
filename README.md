@@ -1,6 +1,6 @@
 # MonsterHunt
 
-I updated this PlugIn to work on Spigot 1.9 to use it by myself. 
+This frok is updated by [erlendir](https://github.com/erlendir/MonsterHunt "erlendir") for the work in Bukkit/Spigot 1.9 - 1.12. x Minecraft Server
 
 If you want to use it by yourself feel free to do so. 
 
