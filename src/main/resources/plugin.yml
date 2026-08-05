@@ -1,0 +1,59 @@
+name: MonsterHuntReloaded
+main: de.airgalaxie.monsterhuntreloaded.MonsterHuntPlugin
+version: '${version}'
+api-version: '26.2'
+description: Configurable nightly monster hunting competitions.
+authors: [matejdro, AirGalaxie]
+softdepend: [Vault]
+commands:
+  hunt:
+    description: Sign up for the hunt.
+    usage: /hunt
+  huntstatus:
+    description: Check the hunt status.
+  huntscore:
+    description: Check high scores.
+    usage: /huntscore [top|player]
+  huntstart:
+    description: Start a hunt manually.
+    usage: /huntstart [world]
+  huntstop:
+    description: Stop a hunt manually.
+    usage: /huntstop [world]
+  huntzone:
+    description: Select the hunt zone.
+  hunttele:
+    description: Teleport to the hunt zone.
+permissions:
+  monsterhunt.*:
+    children:
+      monsterhunt.admincmd.*: true
+      monsterhunt.usercmd.*: true
+      monsterhunt.noteleportrestrictions: true
+  monsterhunt.admincmd.*:
+    children:
+      monsterhunt.admincmd.huntstart: true
+      monsterhunt.admincmd.huntstop: true
+      monsterhunt.admincmd.huntzone: true
+  monsterhunt.usercmd.*:
+    children:
+      monsterhunt.usercmd.hunt: true
+      monsterhunt.usercmd.huntscore: true
+      monsterhunt.usercmd.huntstatus: true
+      monsterhunt.usercmd.hunttele: true
+  monsterhunt.admincmd.huntstart:
+    default: op
+  monsterhunt.admincmd.huntstop:
+    default: op
+  monsterhunt.admincmd.huntzone:
+    default: op
+  monsterhunt.usercmd.hunt:
+    default: true
+  monsterhunt.usercmd.huntscore:
+    default: true
+  monsterhunt.usercmd.huntstatus:
+    default: true
+  monsterhunt.usercmd.hunttele:
+    default: true
+  monsterhunt.noteleportrestrictions:
+    default: op

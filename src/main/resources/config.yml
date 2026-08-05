@@ -1,0 +1,69 @@
+enabled-worlds: []
+
+schedule:
+  start-time: 13000
+  end-time: 23600
+  signup-minutes: 5
+  start-chance-percent: 100
+  skip-days: 0
+
+hunt:
+  signup-enabled: true
+  allow-signup-after-start: false
+  minimum-players: 2
+  death-penalty-percent: 30
+  announce-lead: true
+  only-count-surface-spawns: false
+  surface-tolerance-blocks: 4
+
+zone:
+  enabled: false
+  selection-tool: minecraft:wooden_sword
+  world: ''
+  corner-1: ''
+  corner-2: ''
+  teleport: ''
+
+rewards:
+  winners: 3
+  places:
+    '1':
+      minimum-points: 1
+      items: ['minecraft:diamond 3']
+    '2':
+      minimum-points: 1
+      items: ['minecraft:diamond 2']
+    '3':
+      minimum-points: 1
+      items: ['minecraft:diamond 1']
+
+points:
+  default: 10
+  entities:
+    zombie: 10
+    skeleton: 10
+    creeper: 10
+    spider: 10
+    cave_spider: 12
+    enderman: 15
+    blaze: 15
+    ghast: 20
+    ender_dragon: 100
+  causes:
+    projectile-multiplier: 0.5
+    wolf-multiplier: 0.7
+
+messages:
+  prefix: '<gold>[MonsterHunt]</gold> '
+  signup-open: '<green>Die Anmeldung für die Monsterjagd in <world> ist geöffnet.</green>'
+  signed-up: '<green>Du bist für die Monsterjagd in <world> angemeldet.</green>'
+  already-signed-up: '<yellow>Du bist bereits angemeldet.</yellow>'
+  too-late: '<red>Eine Anmeldung ist jetzt nicht möglich.</red>'
+  started: '<green>Die Monsterjagd in <world> hat begonnen!</green>'
+  stopped: '<yellow>Die Monsterjagd in <world> ist beendet.</yellow>'
+  not-enough-players: '<yellow>Die Monsterjagd findet wegen zu weniger Teilnehmer nicht statt.</yellow>'
+  score: '<gray><mob>: <green>+<points></green> Punkte, Gesamt: <total></gray>'
+  death: '<red>Durch deinen Tod wurden <percent>% deiner Punkte abgezogen.</red>'
+  lead: '<gold><player> führt jetzt mit <points> Punkten.</gold>'
+  no-permission: '<red>Dazu hast du keine Berechtigung.</red>'
+  no-hunt: '<yellow>In dieser Welt läuft keine Monsterjagd.</yellow>'
