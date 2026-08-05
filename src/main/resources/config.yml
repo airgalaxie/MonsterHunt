@@ -38,17 +38,47 @@ rewards:
       items: ['minecraft:diamond 1']
 
 points:
-  default: 10
   entities:
-    zombie: 10
-    skeleton: 10
-    creeper: 10
-    spider: 10
-    cave_spider: 12
-    enderman: 15
     blaze: 15
-    ghast: 20
+    bogged: 12
+    breeze: 15
+    cave_spider: 12
+    creaking: 15
+    creeper: 10
+    drowned: 12
+    elder_guardian: 50
     ender_dragon: 100
+    enderman: 15
+    endermite: 8
+    evoker: 25
+    ghast: 20
+    guardian: 15
+    hoglin: 12
+    husk: 12
+    illusioner: 25
+    magma_cube: 10
+    parched: 12
+    phantom: 15
+    piglin: 10
+    piglin_brute: 20
+    pillager: 12
+    ravager: 30
+    shulker: 20
+    silverfish: 8
+    skeleton: 10
+    slime: 8
+    spider: 10
+    stray: 12
+    vex: 15
+    vindicator: 15
+    warden: 100
+    witch: 20
+    wither: 100
+    wither_skeleton: 15
+    zoglin: 15
+    zombie: 10
+    zombie_villager: 12
+    zombified_piglin: 10
   causes:
     projectile-multiplier: 0.5
     wolf-multiplier: 0.7

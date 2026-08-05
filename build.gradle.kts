@@ -37,4 +37,9 @@ tasks.processResources {
 
 tasks.jar {
     archiveBaseName = "MonsterHuntReloaded"
+    destinationDirectory = layout.projectDirectory.dir("target")
+}
+
+tasks.clean {
+    delete(layout.projectDirectory.dir("target"))
 }

@@ -35,15 +35,14 @@ public final class RewardService {
             lastScore = entry.getValue();
             int minimum = plugin.getConfig().getInt("rewards.places." + place + ".minimum-points", 1);
             if (entry.getValue() < minimum) continue;
-            give(entry.getKey(), place);
+            Player player = Bukkit.getPlayer(entry.getKey());
+            if (player != null) givePlace(player, place);
             results.add(new Result(place, entry.getKey(), entry.getValue()));
         }
         return results;
     }
 
-    private void give(UUID playerId, int place) {
-        Player player = Bukkit.getPlayer(playerId);
-        if (player == null) return;
+    public void givePlace(Player player, int place) {
         String base = "rewards.places." + place;
         for (String specification : plugin.getConfig().getStringList(base + ".items")) {
             String[] parts = specification.trim().split("\\s+");

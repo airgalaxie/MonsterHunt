@@ -2,12 +2,51 @@
 
 MonsterHuntReloaded ist eine modernisierte Paper-26.2-Version des klassischen
 MonsterHunt-Plugins. Es benötigt Java 25 und wird mit `./gradlew build` gebaut.
-Das Plugin-JAR liegt anschließend unter `build/libs/`.
+Das fertige Plugin-JAR liegt anschließend direkt unter `target/`.
 
 ## Datenhaltung
 
 Highscores werden aktuell ohne zusätzliche Abhängigkeit in
 `plugins/MonsterHuntReloaded/highscores.yml` gespeichert.
+
+## Gewertete Monster
+
+Es gibt genau eine Monsterliste unter `points.entities` in der `config.yml`.
+Ein Kill gibt nur dann Punkte, wenn die getötete Entity in Paper das Interface
+`Enemy` implementiert, dem Spieler durch ihr normales Kampfverhalten Schaden
+zufügen kann und ihr Minecraft-Key ausdrücklich in dieser Liste steht. Nicht
+gelistete Entities geben keine Punkte; es existiert kein Defaultwert. Harmlose
+Slimes der kleinsten Größe werden trotz ihres Entity-Typs nicht gewertet.
+
+Die Standardliste umfasst die in Paper 26.2 vorhandenen echten Monster:
+
+`blaze`, `bogged`, `breeze`, `cave_spider`, `creaking`, `creeper`, `drowned`,
+`elder_guardian`, `ender_dragon`, `enderman`, `endermite`, `evoker`, `ghast`,
+`guardian`, `hoglin`, `husk`, `illusioner`, `magma_cube`, `parched`,
+`phantom`, `piglin`, `piglin_brute`, `pillager`, `ravager`, `shulker`,
+`silverfish`, `skeleton`, `slime`, `spider`, `stray`, `vex`, `vindicator`,
+`warden`, `witch`, `wither`, `wither_skeleton`, `zoglin`, `zombie`,
+`zombie_villager` und `zombified_piglin`.
+
+`sulfur_cube`, `camel_husk` und `zombie_nautilus` sind zwar Entity-Typen aus
+Minecraft 26.2, implementieren aber nicht Papers `Enemy`-Klassifikation und
+werden deshalb bewusst nicht als echte Monster gewertet.
+
+`giant` implementiert zwar Papers `Enemy`-Interface, besitzt im regulären
+Vanilla-Spiel aber keine aktive Angriffs-KI und wird deshalb ebenfalls nicht
+gewertet.
+
+## Disconnect und Reconnect
+
+Ein Disconnect wird weder bestraft noch als Aufgabe gewertet. Teilnahme und
+Punktestand werden anhand der UUID unverändert pausiert. Verbindet sich der
+Spieler während derselben Jagd erneut, wird genau dieser Stand fortgeführt.
+Während der Pause entstehen keine zusätzlichen Punkte oder Abzüge.
+
+Endet die Jagd während der Spieler offline ist, wird sein eingefrorener Stand
+einmalig in die Endwertung einbezogen. Rückteleport und gegebenenfalls eine
+Gewinnerbelohnung werden in `reconnect.yml` vorgemerkt und erst beim nächsten
+Login ausgeführt. Die Endwertung wird beim Reconnect nicht neu berechnet.
 
 ## Geplante optionale JDBC-Treiber
 

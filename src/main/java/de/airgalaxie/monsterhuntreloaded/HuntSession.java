@@ -6,6 +6,7 @@ import org.bukkit.World;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 
 public final class HuntSession {
@@ -14,6 +15,7 @@ public final class HuntSession {
     private final Map<UUID, Integer> scores = new HashMap<>();
     private Map<UUID, Integer> lastScores = Map.of();
     private final Map<UUID, Location> returnLocations = new HashMap<>();
+    private final Set<UUID> pausedPlayers = new java.util.HashSet<>();
     private boolean manual;
     private boolean handledToday;
     private int skippedDays;
@@ -28,6 +30,7 @@ public final class HuntSession {
     public Map<UUID, Integer> scores() { return scores; }
     public Map<UUID, Integer> lastScores() { return lastScores; }
     public Map<UUID, Location> returnLocations() { return returnLocations; }
+    public Set<UUID> pausedPlayers() { return pausedPlayers; }
     public boolean manual() { return manual; }
     public void manual(boolean manual) { this.manual = manual; }
     public boolean handledToday() { return handledToday; }
@@ -56,6 +59,7 @@ public final class HuntSession {
         lastScores = Map.copyOf(new LinkedHashMap<>(scores));
         scores.clear();
         returnLocations.clear();
+        pausedPlayers.clear();
         state = HuntState.IDLE;
         manual = false;
     }

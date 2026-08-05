@@ -18,6 +18,7 @@ public final class HuntService {
     private final Messages messages;
     private final HighScoreStore highScores;
     private final RewardService rewards;
+    private final ReconnectStore reconnects;
     private final Map<UUID, HuntSession> sessions = new HashMap<>();
     private HuntZone zone;
 
@@ -26,6 +27,7 @@ public final class HuntService {
         this.messages = messages;
         this.highScores = highScores;
         this.rewards = new RewardService(plugin);
+        this.reconnects = new ReconnectStore(plugin);
         reload();
     }
 
@@ -118,6 +120,9 @@ public final class HuntService {
             rewards.reward(session.scores()).forEach(result -> {
                 String name = Bukkit.getOfflinePlayer(result.playerId()).getName();
                 highScores.update(result.playerId(), name == null ? result.playerId().toString() : name, result.score());
+                if (Bukkit.getPlayer(result.playerId()) == null) {
+                    reconnects.queueReward(result.playerId(), result.place());
+                }
             });
             for (Map.Entry<UUID, Integer> entry : session.scores().entrySet()) {
                 String name = Bukkit.getOfflinePlayer(entry.getKey()).getName();
@@ -128,6 +133,7 @@ public final class HuntService {
         session.returnLocations().forEach((playerId, location) -> {
             Player player = Bukkit.getPlayer(playerId);
             if (player != null && player.isOnline()) player.teleportAsync(location);
+            else reconnects.queueReturn(playerId, location);
         });
         session.reset();
         broadcast("stopped", text("world", world.getName()));
@@ -157,6 +163,23 @@ public final class HuntService {
             if (world != null) stop(session, world, false);
         }
         highScores.save();
+        reconnects.save();
+    }
+
+    public void pause(Player player) {
+        HuntSession session = session(player.getWorld());
+        if (session != null && session.state() != HuntState.IDLE
+                && session.scores().containsKey(player.getUniqueId())) {
+            session.pausedPlayers().add(player.getUniqueId());
+        }
+    }
+
+    public void resume(Player player) {
+        reconnects.consume(player, rewards);
+        HuntSession session = session(player.getWorld());
+        if (session != null && session.pausedPlayers().remove(player.getUniqueId())) {
+            player.sendRichMessage("<gold>[MonsterHunt]</gold> <green>Deine pausierte Jagd wird mit unverändertem Punktestand fortgesetzt.</green>");
+        }
     }
 
     public void rememberTeleport(Player player, Location origin) {

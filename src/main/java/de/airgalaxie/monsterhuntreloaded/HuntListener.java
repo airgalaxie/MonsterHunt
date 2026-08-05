@@ -1,14 +1,18 @@
 package de.airgalaxie.monsterhuntreloaded;
 
 import org.bukkit.Location;
+import org.bukkit.entity.Enemy;
 import org.bukkit.entity.LivingEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.entity.Projectile;
+import org.bukkit.entity.Slime;
 import org.bukkit.entity.Wolf;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
+import org.bukkit.event.player.PlayerJoinEvent;
+import org.bukkit.event.player.PlayerQuitEvent;
 
 import static de.airgalaxie.monsterhuntreloaded.Messages.text;
 
@@ -17,6 +21,16 @@ public final class HuntListener implements Listener {
 
     public HuntListener(MonsterHuntPlugin plugin) {
         this.plugin = plugin;
+    }
+
+    @EventHandler
+    public void onQuit(PlayerQuitEvent event) {
+        plugin.hunts().pause(event.getPlayer());
+    }
+
+    @EventHandler
+    public void onJoin(PlayerJoinEvent event) {
+        plugin.hunts().resume(event.getPlayer());
     }
 
     @EventHandler(ignoreCancelled = true)
@@ -34,10 +48,14 @@ public final class HuntListener implements Listener {
             return;
         }
 
+        if (!(dead instanceof Enemy)) return;
+        if (dead instanceof Slime slime && slime.getSize() <= 1) return;
+
         Player killer = resolveKiller(dead);
         if (killer == null) return;
         HuntSession session = plugin.hunts().session(dead.getWorld());
         if (session == null || session.state() != HuntState.RUNNING) return;
+        if (session.pausedPlayers().contains(killer.getUniqueId())) return;
         HuntZone zone = plugin.hunts().zone();
         if (zone != null && !zone.contains(dead.getLocation())) return;
         if (!isEligibleSpawn(dead.getLocation())) return;
@@ -48,8 +66,9 @@ public final class HuntListener implements Listener {
         }
 
         String entityKey = dead.getType().getKey().getKey();
-        int base = plugin.getConfig().getInt("points.entities." + entityKey,
-                plugin.getConfig().getInt("points.default", 10));
+        String pointsPath = "points.entities." + entityKey;
+        if (!plugin.getConfig().isInt(pointsPath)) return;
+        int base = plugin.getConfig().getInt(pointsPath);
         int points = (int) Math.round(base * causeMultiplier(dead));
         if (points <= 0) return;
 
