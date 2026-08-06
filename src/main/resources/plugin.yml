@@ -5,6 +5,8 @@ api-version: '26.2'
 description: Configurable nightly monster hunting competitions.
 authors: [matejdro, AirGalaxie]
 softdepend: [Vault]
+libraries:
+  - org.xerial:sqlite-jdbc:3.50.3.0
 commands:
   hunt:
     description: Sign up for the hunt.

@@ -19,6 +19,7 @@ public final class HuntSession {
     private boolean manual;
     private boolean handledToday;
     private int skippedDays;
+    private long databaseId;
 
     public HuntSession(World world) {
         this.worldId = world.getUID();
@@ -37,6 +38,8 @@ public final class HuntSession {
     public void handledToday(boolean handledToday) { this.handledToday = handledToday; }
     public int skippedDays() { return skippedDays; }
     public void skippedDays(int skippedDays) { this.skippedDays = skippedDays; }
+    public long databaseId() { return databaseId; }
+    public void databaseId(long databaseId) { this.databaseId = databaseId; }
 
     public boolean join(UUID playerId) {
         return scores.putIfAbsent(playerId, 0) == null;
@@ -62,5 +65,6 @@ public final class HuntSession {
         pausedPlayers.clear();
         state = HuntState.IDLE;
         manual = false;
+        databaseId = 0;
     }
 }

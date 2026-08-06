@@ -75,6 +75,7 @@ public final class HuntListener implements Listener {
         int oldLead = session.scores().values().stream().mapToInt(Integer::intValue).max().orElse(0);
         int total = session.addScore(killer.getUniqueId(), points);
         if (total < 0) return;
+        plugin.hunts().recordKill(session, killer, entityKey, points);
         plugin.messages().send(killer, "score", text("mob", entityKey), text("points", points), text("total", total));
         if (plugin.getConfig().getBoolean("hunt.announce-lead", true) && total > oldLead) {
             plugin.getServer().getOnlinePlayers().forEach(player -> plugin.messages().send(player, "lead",

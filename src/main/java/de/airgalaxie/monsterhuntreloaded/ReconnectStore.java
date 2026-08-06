@@ -1,56 +1,37 @@
 package de.airgalaxie.monsterhuntreloaded;
 
 import org.bukkit.Location;
-import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.World;
 import org.bukkit.entity.Player;
 
-import java.io.File;
-import java.io.IOException;
 import java.util.UUID;
-import java.util.logging.Level;
 
 public final class ReconnectStore {
     private final MonsterHuntPlugin plugin;
-    private final File file;
-    private final YamlConfiguration data;
+    private final DatabaseStorage storage;
 
-    public ReconnectStore(MonsterHuntPlugin plugin) {
+    public ReconnectStore(MonsterHuntPlugin plugin, DatabaseStorage storage) {
         this.plugin = plugin;
-        this.file = new File(plugin.getDataFolder(), "reconnect.yml");
-        this.data = YamlConfiguration.loadConfiguration(file);
+        this.storage = storage;
     }
 
-    public void queueReturn(UUID playerId, Location location) {
-        data.set(path(playerId) + ".return-location", location);
-        save();
-    }
-
-    public void queueReward(UUID playerId, int place) {
-        data.set(path(playerId) + ".reward-place", place);
-        save();
-    }
+    public void queueReturn(UUID playerId, Location location) { storage.queueReturn(playerId, location); }
+    public void queueReward(UUID playerId, int place) { storage.queueReward(playerId, place); }
 
     public void consume(Player player, RewardService rewards) {
-        String path = path(player.getUniqueId());
-        Location returnLocation = data.getLocation(path + ".return-location");
-        int rewardPlace = data.getInt(path + ".reward-place", 0);
-        if (returnLocation != null) player.teleportAsync(returnLocation);
-        if (rewardPlace > 0) rewards.givePlace(player, rewardPlace);
-        if (returnLocation != null || rewardPlace > 0) {
-            data.set(path, null);
-            save();
+        for (DatabaseStorage.PendingAction action : storage.pendingActions(player.getUniqueId())) {
+            boolean completed = false;
+            if ("PLACE_REWARD".equals(action.type()) && action.rewardPlace() > 0) {
+                rewards.givePlace(player, action.rewardPlace());
+                completed = true;
+            } else if ("RETURN_TELEPORT".equals(action.type()) && action.worldId() != null) {
+                World world = plugin.getServer().getWorld(action.worldId());
+                if (world != null) {
+                    player.teleportAsync(new Location(world, action.x(), action.y(), action.z(), action.yaw(), action.pitch()))
+                            .thenAccept(success -> { if (success) storage.completeAction(action.id()); });
+                }
+            }
+            if (completed) storage.completeAction(action.id());
         }
-    }
-
-    public void save() {
-        try {
-            data.save(file);
-        } catch (IOException exception) {
-            plugin.getLogger().log(Level.SEVERE, "Could not save reconnect.yml", exception);
-        }
-    }
-
-    private static String path(UUID playerId) {
-        return "players." + playerId;
     }
 }

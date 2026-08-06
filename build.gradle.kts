@@ -14,8 +14,10 @@ repositories {
 
 dependencies {
     compileOnly(libs.paper.api)
+    runtimeOnly(libs.sqlite.jdbc)
     testImplementation(platform(libs.junit.bom))
     testImplementation(libs.bundles.junit)
+    testRuntimeOnly(libs.paper.api)
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
 }
 

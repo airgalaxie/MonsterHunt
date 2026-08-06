@@ -19,20 +19,29 @@ public final class HuntService {
     private final HighScoreStore highScores;
     private final RewardService rewards;
     private final ReconnectStore reconnects;
+    private final DatabaseStorage storage;
     private final Map<UUID, HuntSession> sessions = new HashMap<>();
     private HuntZone zone;
+    private int scheduledStart;
+    private int scheduledEnd;
 
-    public HuntService(MonsterHuntPlugin plugin, Messages messages, HighScoreStore highScores) {
+    public HuntService(MonsterHuntPlugin plugin, Messages messages, HighScoreStore highScores, DatabaseStorage storage) {
         this.plugin = plugin;
         this.messages = messages;
         this.highScores = highScores;
+        this.storage = storage;
         this.rewards = new RewardService(plugin);
-        this.reconnects = new ReconnectStore(plugin);
+        this.reconnects = new ReconnectStore(plugin, storage);
         reload();
     }
 
     public void reload() {
         zone = HuntZone.load(plugin.getConfig());
+        scheduledStart = parseMinecraftTime(plugin.getConfig().getString("schedule.start-time", "19:00"));
+        scheduledEnd = parseMinecraftTime(plugin.getConfig().getString("schedule.end-time", "05:00"));
+        if (scheduledStart == scheduledEnd) {
+            throw new IllegalArgumentException("schedule.start-time and schedule.end-time must be different");
+        }
         sessions.clear();
         List<String> enabled = plugin.getConfig().getStringList("enabled-worlds");
         Collection<World> worlds = enabled.isEmpty() ? Bukkit.getWorlds()
@@ -53,26 +62,24 @@ public final class HuntService {
     public HuntZone zone() { return zone; }
 
     public void tick() {
-        int start = plugin.getConfig().getInt("schedule.start-time", 13000);
-        int end = plugin.getConfig().getInt("schedule.end-time", 23600);
-        int signupTicks = plugin.getConfig().getInt("schedule.signup-minutes", 5) * 1200;
-        int signupStart = Math.floorMod(start - signupTicks, 24000);
+        int signupTicks = plugin.getConfig().getInt("schedule.signup-minutes", 1) * 1200;
+        int signupStart = Math.floorMod(scheduledStart - signupTicks, 24000);
         for (HuntSession session : sessions.values()) {
             World world = Bukkit.getWorld(session.worldId());
             if (world == null || session.manual()) continue;
             int time = (int) world.getTime();
             if (session.state() == HuntState.IDLE && !session.handledToday()
                     && plugin.getConfig().getBoolean("hunt.signup-enabled", true)
-                    && inRange(time, signupStart, start)) {
+                    && inRange(time, signupStart, scheduledStart)) {
                 openSignup(session, world);
             }
             if ((session.state() == HuntState.SIGNUP
                     || (session.state() == HuntState.IDLE && !session.handledToday()))
-                    && inRange(time, start, end)) {
+                    && inRange(time, scheduledStart, scheduledEnd)) {
                 autoStart(session, world);
             }
-            if (session.state() == HuntState.RUNNING && !inRange(time, start, end)) stop(session, world, true);
-            if (!inRange(time, signupStart, end)) session.handledToday(false);
+            if (session.state() == HuntState.RUNNING && !inRange(time, scheduledStart, scheduledEnd)) stop(session, world, true);
+            if (!inRange(time, signupStart, scheduledEnd)) session.handledToday(false);
         }
     }
 
@@ -110,6 +117,7 @@ public final class HuntService {
         session.state(HuntState.RUNNING);
         session.manual(manual);
         session.handledToday(true);
+        session.databaseId(storage.startHunt(world, manual));
         broadcast("started", text("world", world.getName()));
         return true;
     }
@@ -117,23 +125,46 @@ public final class HuntService {
     public void stop(HuntSession session, World world, boolean rewardPlayers) {
         if (session.state() == HuntState.IDLE) return;
         if (rewardPlayers && session.state() == HuntState.RUNNING) {
+            Map<UUID, Integer> offlineRewards = new HashMap<>();
+            Map<UUID, Integer> placements = new HashMap<>();
+            Map<UUID, String> names = new HashMap<>();
             rewards.reward(session.scores()).forEach(result -> {
                 String name = Bukkit.getOfflinePlayer(result.playerId()).getName();
-                highScores.update(result.playerId(), name == null ? result.playerId().toString() : name, result.score());
+                names.put(result.playerId(), name == null ? result.playerId().toString() : name);
+                placements.put(result.playerId(), result.place());
                 if (Bukkit.getPlayer(result.playerId()) == null) {
-                    reconnects.queueReward(result.playerId(), result.place());
+                    offlineRewards.put(result.playerId(), result.place());
                 }
             });
             for (Map.Entry<UUID, Integer> entry : session.scores().entrySet()) {
                 String name = Bukkit.getOfflinePlayer(entry.getKey()).getName();
-                highScores.update(entry.getKey(), name == null ? entry.getKey().toString() : name, entry.getValue());
+                names.putIfAbsent(entry.getKey(), name == null ? entry.getKey().toString() : name);
             }
-            highScores.save();
+            Map<UUID, Location> pendingReturns = new HashMap<>();
+            session.returnLocations().forEach((playerId, location) -> {
+                Player player = Bukkit.getPlayer(playerId);
+                if (player == null || !player.isOnline()) pendingReturns.put(playerId, location);
+            });
+            storage.completeHunt(session.databaseId(), session.scores(), placements, names,
+                    offlineRewards, pendingReturns, true);
+        } else if (session.state() == HuntState.RUNNING && session.databaseId() > 0) {
+            Map<UUID, String> names = new HashMap<>();
+            session.scores().keySet().forEach(playerId -> {
+                String name = Bukkit.getOfflinePlayer(playerId).getName();
+                names.put(playerId, name == null ? playerId.toString() : name);
+            });
+            Map<UUID, Location> pendingReturns = new HashMap<>();
+            session.returnLocations().forEach((playerId, location) -> {
+                Player player = Bukkit.getPlayer(playerId);
+                if (player == null || !player.isOnline()) pendingReturns.put(playerId, location);
+            });
+            storage.completeHunt(session.databaseId(), session.scores(), Map.of(), names,
+                    Map.of(), pendingReturns, false);
         }
         session.returnLocations().forEach((playerId, location) -> {
             Player player = Bukkit.getPlayer(playerId);
             if (player != null && player.isOnline()) player.teleportAsync(location);
-            else reconnects.queueReturn(playerId, location);
+            else if (!rewardPlayers) reconnects.queueReturn(playerId, location);
         });
         session.reset();
         broadcast("stopped", text("world", world.getName()));
@@ -162,8 +193,6 @@ public final class HuntService {
             World world = Bukkit.getWorld(session.worldId());
             if (world != null) stop(session, world, false);
         }
-        highScores.save();
-        reconnects.save();
     }
 
     public void pause(Player player) {
@@ -187,6 +216,10 @@ public final class HuntService {
         if (session != null) session.returnLocations().putIfAbsent(player.getUniqueId(), origin);
     }
 
+    public void recordKill(HuntSession session, Player player, String entityKey, int points) {
+        storage.recordKill(session.databaseId(), player.getUniqueId(), player.getName(), entityKey, points);
+    }
+
     private void broadcast(String key, net.kyori.adventure.text.minimessage.tag.resolver.TagResolver... tags) {
         Bukkit.getOnlinePlayers().forEach(player -> messages.send(player, key, tags));
         messages.send(Bukkit.getConsoleSender(), key, tags);
@@ -194,5 +227,14 @@ public final class HuntService {
 
     private static boolean inRange(int time, int start, int end) {
         return start <= end ? time >= start && time < end : time >= start || time < end;
+    }
+
+    static int parseMinecraftTime(String value) {
+        if (value == null || !value.matches("(?:[01]\\d|2[0-3]):[0-5]\\d")) {
+            throw new IllegalArgumentException("Minecraft time must use quoted HH:mm format, for example '19:00': " + value);
+        }
+        int hour = Integer.parseInt(value.substring(0, 2));
+        int minute = Integer.parseInt(value.substring(3, 5));
+        return Math.floorMod((int) Math.round(((hour * 60 + minute) - 360) * (1000.0 / 60)), 24000);
     }
 }

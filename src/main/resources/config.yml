@@ -1,35 +1,114 @@
+# Worlds in which automatic monster hunts may take place.
+# If the list is empty, all loaded worlds are used.
 enabled-worlds:
   - world
 
+# Persistent storage for all player, hunt, and reconnect data.
+storage:
+  # Currently supported primary storage: sqlite
+  type: sqlite
+  sqlite:
+    # Path relative to the plugin directory.
+    file: data/monsterhunt.db
+
+    # JDBC driver class. An existing system driver is preferred;
+    # otherwise, Paper provides the driver specified in plugin.yml.
+    driver-class: org.sqlite.JDBC
+
+    # SQLite safety and wait behavior.
+    pragmas:
+      # WAL improves crash safety and allows concurrent read access.
+      journal-mode: WAL
+      # FULL prioritizes safe writes over maximum performance.
+      synchronous: FULL
+      # Maximum wait time for a locked database, in milliseconds.
+      busy-timeout-millis: 5000
+
+    # Automatic database backups with integrity verification.
+    backup:
+      enabled: true
+      # Time between backups, in real-world hours.
+      interval-hours: 24
+      # Delay after server startup before the first backup, in minutes.
+      initial-delay-minutes: 10
+      # Directory relative to the plugin directory.
+      directory: backups
+      retention:
+        # Keep no more than this number of recent backups.
+        max-files: 14
+        # Delete backups once they exceed this age in days.
+        max-age-days: 30
+
+  history:
+    kill-events:
+      # Stores every individual scored kill. Disabled by default because this
+      # detailed history produces considerably more data than hunt results.
+      enabled: false
+
+# Automatic schedule based on the Minecraft time of each world.
 schedule:
-  start-time: 12000
-  end-time: 23600
-  signup-minutes: 5
+  # Minecraft time in 'HH:mm' format. Quotation marks are required.
+  # '19:00' starts after nightfall; '05:00' ends at dawn.
+  start-time: '19:00'
+  end-time: '05:00'
+
+  # Signup duration in real-world minutes, not Minecraft minutes.
+  signup-minutes: 1
+
+  # Percentage chance that a scheduled hunt actually starts.
   start-chance-percent: 100
+
+  # Number of complete Minecraft days skipped between start attempts.
   skip-days: 0
 
+# Participation conditions and scoring rules for a monster hunt.
 hunt:
+  # true: Players must sign up with /hunt.
+  # false: Players join automatically with their first valid kill.
   signup-enabled: true
+
+  # Allows players to sign up after a hunt has already started.
   allow-signup-after-start: false
+
+  # Minimum number of signed-up players required for an automatic start.
   minimum-players: 2
+
+  # Percentage deducted from the current score on death.
   death-penalty-percent: 30
+
+  # Announces server-wide when a player takes the sole lead.
   announce-lead: true
+
+  # Scores only monsters near the highest surface at their position.
   only-count-surface-spawns: false
+
+  # Allowed vertical distance from the surface, in blocks.
   surface-tolerance-blocks: 4
 
+# Optional restricted hunt area. The values are set with /huntzone.
 zone:
   enabled: false
+
+  # Tool used to select the two corners.
   selection-tool: minecraft:wooden_sword
+
+  # Empty values mean that no valid area has been saved yet.
   world: ''
   corner-1: ''
   corner-2: ''
+
+  # Optional teleport destination inside the hunt area.
   teleport: ''
 
+# Rewards for the highest-ranked players.
 rewards:
+  # Maximum number of rewarded places.
   winners: 3
   places:
     '1':
+      # This place receives a reward only from this score onward.
       minimum-points: 1
+      # Format for each entry: '<material key> <amount>'.
       items: ['minecraft:diamond 3']
     '2':
       minimum-points: 1
@@ -38,7 +117,9 @@ rewards:
       minimum-points: 1
       items: ['minecraft:diamond 1']
 
+# Points for valid monsters and multipliers by damage source.
 points:
+  # Only explicitly listed Minecraft entity keys award points.
   entities:
     blaze: 15
     bogged: 12
@@ -80,10 +161,15 @@ points:
     zombie: 10
     zombie_villager: 12
     zombified_piglin: 10
+
   causes:
+    # 1.0 equals 100%; 0.5 equals 50% of the monster's points.
     projectile-multiplier: 0.5
     wolf-multiplier: 0.7
 
+# Texts in MiniMessage format.
+# Placeholders such as <world>, <player>, <points>, <total>, <mob>, and <percent>
+# may be used in the messages intended for them.
 messages:
   prefix: '<gold>[MonsterHunt]</gold> '
   signup-open: '<green>Die Anmeldung für die Monsterjagd in <world> ist geöffnet.</green>'

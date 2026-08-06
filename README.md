@@ -8,8 +8,31 @@ The finished plugin JAR is placed directly in `target/`.
 
 ## Data storage
 
-High scores are currently stored without any additional dependencies in
-`plugins/MonsterHuntReloaded/highscores.yml`.
+SQLite is the primary store for players, hunt history, results, pending reconnect
+actions, and high scores. The database defaults to
+`plugins/MonsterHuntReloaded/data/monsterhunt.db`. Configuration remains YAML.
+Existing `highscores.yml` and `reconnect.yml` files are imported once and renamed
+to `.imported`; they are never used as a fallback store.
+
+The plugin first accepts an SQLite JDBC driver already registered at runtime.
+Paper loads and caches the pinned Xerial driver declared in `plugin.yml` as the
+fallback. Startup fails explicitly when no compatible driver is available.
+
+Consistent SQLite backups are enabled by default every 24 hours, verified with
+`PRAGMA quick_check`, and retained according to `storage.sqlite.backup` in
+`config.yml`. Per-kill history can grow considerably and is therefore disabled
+by default under `storage.history.kill-events.enabled`. Hunt summaries and final
+player results are always retained.
+
+## Schedule
+
+`schedule.start-time` and `schedule.end-time` use the quoted Minecraft in-game
+clock format `HH:mm`, not raw world ticks or real-world time. The defaults
+`'19:00'` and `'05:00'` run the hunt through the Minecraft night. By contrast,
+`schedule.signup-minutes` is a real-world duration; the default one-minute signup
+period begins about 72 Minecraft minutes before the hunt starts. Existing
+configurations with numeric tick values must be changed to quoted `HH:mm` values;
+invalid schedule values prevent the plugin from starting.
 
 ## Scoring monsters
 
@@ -46,24 +69,8 @@ or deductions are applied while they are disconnected.
 
 If the hunt ends while the player is offline, their frozen score is included in
 the final results once. The return teleport and, where applicable, a winner's
-reward are recorded in `reconnect.yml` and processed on the player's next login.
-The final results are not recalculated when the player reconnects.
-
-## Planned optional JDBC drivers
-
-External database integration is intentionally not enabled yet. A future
-implementation is intended to load JDBC drivers exclusively from the server's
-`/drivers/` directory; drivers will not be bundled in the plugin JAR. Planned
-examples include:
-
-- `/drivers/sqlite-jdbc-<version>.jar`
-- `/drivers/mysql-connector-j-<version>.jar`
-- `/drivers/postgresql-<version>.jar`
-
-These files are supplied by the server operator and must match the database in
-use. Until an isolated class loader, connection pooling, schema migrations, and
-a clean fallback have been implemented, the plugin ignores this directory. This
-allows the current version to run without third-party drivers.
+reward are recorded as pending actions in SQLite and processed on the player's
+next login. The final results are not recalculated when the player reconnects.
 
 ## Versioning
 
@@ -102,8 +109,33 @@ Das fertige Plugin-JAR liegt anschließend direkt unter `target/`.
 
 ### Datenhaltung
 
-Highscores werden aktuell ohne zusätzliche Abhängigkeit in
-`plugins/MonsterHuntReloaded/highscores.yml` gespeichert.
+SQLite ist der Primärspeicher für Spieler, Hunt-Historie, Ergebnisse,
+ausstehende Reconnect-Aktionen und Highscores. Die Datenbank liegt standardmäßig
+unter `plugins/MonsterHuntReloaded/data/monsterhunt.db`; die Konfiguration bleibt
+in YAML. Vorhandene `highscores.yml` und `reconnect.yml` werden einmal importiert,
+anschließend in `.imported` umbenannt und nie als stiller Fallback verwendet.
+
+Zuerst wird ein zur Laufzeit bereits registrierter SQLite-JDBC-Treiber geprüft.
+Als Fallback lädt und zwischenspeichert Paper die festgelegte Xerial-Version aus
+der `plugin.yml`. Ist kein kompatibler Treiber verfügbar, schlägt der Start mit
+einer eindeutigen Fehlermeldung fehl.
+
+Konsistente SQLite-Sicherungen sind standardmäßig alle 24 Stunden aktiv, werden
+mit `PRAGMA quick_check` geprüft und gemäß `storage.sqlite.backup` in der
+`config.yml` aufbewahrt. Die potentiell umfangreiche Historie einzelner Kills ist
+unter `storage.history.kill-events.enabled` standardmäßig deaktiviert. Hunt- und
+Ergebnis-Historie wird immer gespeichert.
+
+### Zeitplan
+
+`schedule.start-time` und `schedule.end-time` verwenden die in Anführungszeichen
+gesetzte Minecraft-Uhrzeit im Format `HH:mm`, keine Welt-Ticks und keine reale
+Uhrzeit. Mit den Standardwerten `'19:00'` und `'05:00'` läuft die Jagd während
+der Minecraft-Nacht. `schedule.signup-minutes` ist dagegen eine reale Dauer: Die
+standardmäßige Anmeldezeit von einer Minute beginnt ungefähr 72 Minecraft-Minuten
+vor dem Start der Jagd. In vorhandenen Konfigurationen müssen numerische
+Tickwerte durch `HH:mm`-Werte in Anführungszeichen ersetzt werden; bei ungültigen
+Zeitangaben startet das Plugin nicht.
 
 ### Gewertete Monster
 
@@ -141,24 +173,9 @@ Während der Pause entstehen keine zusätzlichen Punkte oder Abzüge.
 
 Endet die Jagd während der Spieler offline ist, wird sein eingefrorener Stand
 einmalig in die Endwertung einbezogen. Rückteleport und gegebenenfalls eine
-Gewinnerbelohnung werden in `reconnect.yml` vorgemerkt und erst beim nächsten
-Login ausgeführt. Die Endwertung wird beim Reconnect nicht neu berechnet.
-
-### Geplante optionale JDBC-Treiber
-
-Eine externe Datenbankanbindung ist bewusst noch nicht aktiviert. Die spätere
-Implementierung soll JDBC-Treiber ausschließlich aus einem Serververzeichnis
-`/drivers/` laden; Treiber werden nicht in das Plugin-JAR eingebettet. Vorgesehen
-sind beispielsweise:
-
-- `/drivers/sqlite-jdbc-<version>.jar`
-- `/drivers/mysql-connector-j-<version>.jar`
-- `/drivers/postgresql-<version>.jar`
-
-Die Dateien stammen vom Serverbetreiber und müssen zur verwendeten Datenbank
-passen. Bis ein isolierter Classloader, Connection-Pooling, Schema-Migrationen
-und ein sauberer Fallback implementiert sind, ignoriert das Plugin dieses
-Verzeichnis. Dadurch bleibt die aktuelle Version ohne fremde Treiber lauffähig.
+Gewinnerbelohnung werden als ausstehende Aktionen in SQLite vorgemerkt und erst
+beim nächsten Login ausgeführt. Die Endwertung wird beim Reconnect nicht neu
+berechnet.
 
 ### Versionierung
 
