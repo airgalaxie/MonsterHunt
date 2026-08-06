@@ -1,7 +1,8 @@
-enabled-worlds: []
+enabled-worlds:
+  - world
 
 schedule:
-  start-time: 13000
+  start-time: 12000
   end-time: 23600
   signup-minutes: 5
   start-chance-percent: 100
