@@ -222,7 +222,9 @@ public final class HuntService {
 
     private void broadcast(String key, net.kyori.adventure.text.minimessage.tag.resolver.TagResolver... tags) {
         Bukkit.getOnlinePlayers().forEach(player -> messages.send(player, key, tags));
-        messages.send(Bukkit.getConsoleSender(), key, tags);
+        if (plugin.getConfig().getBoolean("messages.send-to-console", false)) {
+            messages.send(Bukkit.getConsoleSender(), key, tags);
+        }
     }
 
     private static boolean inRange(int time, int start, int end) {

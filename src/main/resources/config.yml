@@ -171,6 +171,8 @@ points:
 # Placeholders such as <world>, <player>, <points>, <total>, <mob>, and <percent>
 # may be used in the messages intended for them.
 messages:
+  # Also sends server-wide hunt announcements to the Minecraft console.
+  send-to-console: false
   prefix: '<gold>[MonsterHunt]</gold> '
   signup-open: '<green>Die Anmeldung für die Monsterjagd in <world> ist geöffnet.</green>'
   signed-up: '<green>Du bist für die Monsterjagd in <world> angemeldet.</green>'
