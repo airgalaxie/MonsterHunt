@@ -2,7 +2,7 @@
 
 English | [Deutsch](#deutsch)
 
-MonsterHuntReloaded is a modernized Paper 26.2 version of the classic
+MonsterHuntReloaded is a modernized Paper version of the classic
 MonsterHunt plugin. It requires Java 25 and can be built with `./gradlew build`.
 The finished plugin JAR is placed directly in `target/`.
 
@@ -43,7 +43,7 @@ Minecraft key is explicitly included in this list. Entities not listed award no
 points; there is no default value. Harmless slimes of the smallest size do not
 count despite their entity type.
 
-The default list contains the actual monsters available in Paper 26.2:
+The default list contains the actual monsters available in the targeted Paper API:
 
 `blaze`, `bogged`, `breeze`, `cave_spider`, `creaking`, `creeper`, `drowned`,
 `elder_guardian`, `ender_dragon`, `enderman`, `endermite`, `evoker`, `ghast`,
@@ -54,7 +54,7 @@ The default list contains the actual monsters available in Paper 26.2:
 `zombie_villager`, and `zombified_piglin`.
 
 Although `sulfur_cube`, `camel_husk`, and `zombie_nautilus` are entity types in
-Minecraft 26.2, they do not implement Paper's `Enemy` classification and are
+the targeted Minecraft version, they do not implement Paper's `Enemy` classification and are
 therefore deliberately not counted as actual monsters.
 
 Although `giant` implements Paper's `Enemy` interface, it has no active attack
@@ -75,9 +75,9 @@ next login. The final results are not recalculated when the player reconnects.
 ## Versioning
 
 Java, Paper, and test versions are managed centrally in
-`gradle/libs.versions.toml`. In accordance with the current Paper documentation,
-the dependency uses `26.2.build.+`. By contrast, `plugin.yml` contains the API
-declaration supported by Paper: `api-version: '26.2'`.
+`gradle/libs.versions.toml`. The build derives the `plugin.yml` `api-version`
+from the Paper dependency version, so the version catalog is the single source
+of truth for the targeted Paper release.
 
 ## Acknowledgements
 
@@ -103,7 +103,7 @@ See [LICENSE.md](LICENSE.md) for details.
 
 [English](#monsterhuntreloaded) | Deutsch
 
-MonsterHuntReloaded ist eine modernisierte Paper-26.2-Version des klassischen
+MonsterHuntReloaded ist eine modernisierte Paper-Version des klassischen
 MonsterHunt-Plugins. Es benötigt Java 25 und wird mit `./gradlew build` gebaut.
 Das fertige Plugin-JAR liegt anschließend direkt unter `target/`.
 
@@ -146,7 +146,7 @@ zufügen kann und ihr Minecraft-Key ausdrücklich in dieser Liste steht. Nicht
 gelistete Entities geben keine Punkte; es existiert kein Defaultwert. Harmlose
 Slimes der kleinsten Größe werden trotz ihres Entity-Typs nicht gewertet.
 
-Die Standardliste umfasst die in Paper 26.2 vorhandenen echten Monster:
+Die Standardliste umfasst die in der Zielversion von Paper vorhandenen echten Monster:
 
 `blaze`, `bogged`, `breeze`, `cave_spider`, `creaking`, `creeper`, `drowned`,
 `elder_guardian`, `ender_dragon`, `enderman`, `endermite`, `evoker`, `ghast`,
@@ -156,8 +156,8 @@ Die Standardliste umfasst die in Paper 26.2 vorhandenen echten Monster:
 `warden`, `witch`, `wither`, `wither_skeleton`, `zoglin`, `zombie`,
 `zombie_villager` und `zombified_piglin`.
 
-`sulfur_cube`, `camel_husk` und `zombie_nautilus` sind zwar Entity-Typen aus
-Minecraft 26.2, implementieren aber nicht Papers `Enemy`-Klassifikation und
+`sulfur_cube`, `camel_husk` und `zombie_nautilus` sind zwar Entity-Typen der
+Minecraft-Zielversion, implementieren aber nicht Papers `Enemy`-Klassifikation und
 werden deshalb bewusst nicht als echte Monster gewertet.
 
 `giant` implementiert zwar Papers `Enemy`-Interface, besitzt im regulären
@@ -180,9 +180,9 @@ berechnet.
 ### Versionierung
 
 Java-, Paper- und Testversionen werden zentral in
-`gradle/libs.versions.toml` verwaltet. Für die Abhängigkeit wird gemäß aktueller
-Paper-Dokumentation `26.2.build.+` verwendet. In `plugin.yml` steht dagegen die
-von Paper erlaubte API-Angabe `api-version: '26.2'`.
+`gradle/libs.versions.toml` verwaltet. Der Build leitet die `api-version` der
+`plugin.yml` aus der Paper-Abhängigkeitsversion ab. Damit ist der Versionskatalog
+die einzige Quelle für die verwendete Paper-Version.
 
 ### Danksagung
 

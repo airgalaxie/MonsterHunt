@@ -1,7 +1,7 @@
 name: MonsterHuntReloaded
 main: de.airgalaxie.monsterhuntreloaded.MonsterHuntPlugin
 version: '${version}'
-api-version: '26.2'
+api-version: '${paperApiVersion}'
 description: Configurable nightly monster hunting competitions.
 authors: [matejdro, AirGalaxie]
 softdepend: [Vault]

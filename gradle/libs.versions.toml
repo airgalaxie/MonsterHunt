@@ -1,6 +1,6 @@
 [versions]
 java = "25"
-paper = "26.2.build.+"
+paper = "26.3.build.+"
 junit = "6.0.1"
 sqlite = "3.50.3.0"
 

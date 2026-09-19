@@ -36,7 +36,7 @@ public final class MonsterHuntPlugin extends JavaPlugin {
         getServer().getPluginManager().registerEvents(zoneSelector, this);
         getServer().getScheduler().runTaskTimer(this, hunts::tick, 40L, 40L);
         scheduleBackups();
-        getLogger().info("MonsterHuntReloaded enabled for Paper 26.2.");
+        getLogger().info("MonsterHuntReloaded enabled for Paper " + getPluginMeta().getAPIVersion() + ".");
     }
 
     @Override
