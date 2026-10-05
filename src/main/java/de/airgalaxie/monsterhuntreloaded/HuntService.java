@@ -128,7 +128,9 @@ public final class HuntService {
             Map<UUID, Integer> offlineRewards = new HashMap<>();
             Map<UUID, Integer> placements = new HashMap<>();
             Map<UUID, String> names = new HashMap<>();
-            rewards.reward(session.scores()).forEach(result -> {
+            Map<UUID, Integer> eligibleScores = new HashMap<>(session.scores());
+            session.disqualifiedPlayers().forEach(eligibleScores::remove);
+            rewards.reward(eligibleScores).forEach(result -> {
                 String name = Bukkit.getOfflinePlayer(result.playerId()).getName();
                 names.put(result.playerId(), name == null ? result.playerId().toString() : name);
                 placements.put(result.playerId(), result.place());
@@ -140,12 +142,16 @@ public final class HuntService {
                 String name = Bukkit.getOfflinePlayer(entry.getKey()).getName();
                 names.putIfAbsent(entry.getKey(), name == null ? entry.getKey().toString() : name);
             }
+            session.disqualifiedPlayers().forEach(playerId -> {
+                String name = Bukkit.getOfflinePlayer(playerId).getName();
+                names.putIfAbsent(playerId, name == null ? playerId.toString() : name);
+            });
             Map<UUID, Location> pendingReturns = new HashMap<>();
             session.returnLocations().forEach((playerId, location) -> {
                 Player player = Bukkit.getPlayer(playerId);
                 if (player == null || !player.isOnline()) pendingReturns.put(playerId, location);
             });
-            storage.completeHunt(session.databaseId(), session.scores(), placements, names,
+            storage.completeHunt(session.databaseId(), session.scores(), session.disqualifiedPlayers(), placements, names,
                     offlineRewards, pendingReturns, true);
         } else if (session.state() == HuntState.RUNNING && session.databaseId() > 0) {
             Map<UUID, String> names = new HashMap<>();
@@ -153,12 +159,16 @@ public final class HuntService {
                 String name = Bukkit.getOfflinePlayer(playerId).getName();
                 names.put(playerId, name == null ? playerId.toString() : name);
             });
+            session.disqualifiedPlayers().forEach(playerId -> {
+                String name = Bukkit.getOfflinePlayer(playerId).getName();
+                names.putIfAbsent(playerId, name == null ? playerId.toString() : name);
+            });
             Map<UUID, Location> pendingReturns = new HashMap<>();
             session.returnLocations().forEach((playerId, location) -> {
                 Player player = Bukkit.getPlayer(playerId);
                 if (player == null || !player.isOnline()) pendingReturns.put(playerId, location);
             });
-            storage.completeHunt(session.databaseId(), session.scores(), Map.of(), names,
+            storage.completeHunt(session.databaseId(), session.scores(), session.disqualifiedPlayers(), Map.of(), names,
                     Map.of(), pendingReturns, false);
         }
         session.returnLocations().forEach((playerId, location) -> {

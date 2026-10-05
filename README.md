@@ -34,6 +34,20 @@ period begins about 72 Minecraft minutes before the hunt starts. Existing
 configurations with numeric tick values must be changed to quoted `HH:mm` values;
 invalid schedule values prevent the plugin from starting.
 
+## Sleeping during a hunt
+
+With the default `hunt.sleep-penalty: DISQUALIFY`, a player who sleeps long
+enough to count towards passing the night or storm during a running hunt is
+disqualified from that hunt. Their score is immediately set to zero, subsequent
+kills award no points, and they receive neither a placement nor a reward. This
+also applies when automatic participation is enabled and the player sleeps
+before their first scored kill. The final hunt result records the
+disqualification.
+
+Set `hunt.sleep-penalty` to `NONE` to disable this rule. The plugin only observes
+successful sleeping; it does not cancel or otherwise change Minecraft's sleep
+mechanics.
+
 ## Scoring monsters
 
 There is exactly one monster list under `points.entities` in `config.yml`.
@@ -136,6 +150,20 @@ standardmäßige Anmeldezeit von einer Minute beginnt ungefähr 72 Minecraft-Min
 vor dem Start der Jagd. In vorhandenen Konfigurationen müssen numerische
 Tickwerte durch `HH:mm`-Werte in Anführungszeichen ersetzt werden; bei ungültigen
 Zeitangaben startet das Plugin nicht.
+
+### Schlafen während einer Hunt
+
+Mit der Standardeinstellung `hunt.sleep-penalty: DISQUALIFY` wird ein Spieler für
+die laufende Hunt disqualifiziert, sobald er lange genug schläft, um beim
+Überspringen der Nacht oder eines Gewitters mitzuzählen. Sein Punktestand wird
+sofort auf null gesetzt, weitere Kills geben keine Punkte und der Spieler erhält
+weder eine Platzierung noch eine Belohnung. Das gilt bei automatischer Teilnahme
+auch dann, wenn der Spieler vor seinem ersten gewerteten Kill schläft. Die
+Disqualifikation wird im abschließenden Hunt-Ergebnis gespeichert.
+
+Mit `hunt.sleep-penalty: NONE` lässt sich die Regel deaktivieren. Das Plugin
+beobachtet ausschließlich erfolgreiches Schlafen; die Schlafmechanik von
+Minecraft wird weder abgebrochen noch anderweitig verändert.
 
 ### Gewertete Monster
 

@@ -16,6 +16,7 @@ public final class HuntSession {
     private Map<UUID, Integer> lastScores = Map.of();
     private final Map<UUID, Location> returnLocations = new HashMap<>();
     private final Set<UUID> pausedPlayers = new java.util.HashSet<>();
+    private final Set<UUID> disqualifiedPlayers = new java.util.HashSet<>();
     private boolean manual;
     private boolean handledToday;
     private int skippedDays;
@@ -32,6 +33,7 @@ public final class HuntSession {
     public Map<UUID, Integer> lastScores() { return lastScores; }
     public Map<UUID, Location> returnLocations() { return returnLocations; }
     public Set<UUID> pausedPlayers() { return pausedPlayers; }
+    public Set<UUID> disqualifiedPlayers() { return disqualifiedPlayers; }
     public boolean manual() { return manual; }
     public void manual(boolean manual) { this.manual = manual; }
     public boolean handledToday() { return handledToday; }
@@ -46,8 +48,15 @@ public final class HuntSession {
     }
 
     public int addScore(UUID playerId, int points) {
+        if (disqualifiedPlayers.contains(playerId)) return -1;
         return scores.computeIfPresent(playerId, (ignored, old) -> old + points) == null
                 ? -1 : scores.get(playerId);
+    }
+
+    public boolean disqualify(UUID playerId) {
+        if (!disqualifiedPlayers.add(playerId)) return false;
+        scores.computeIfPresent(playerId, (ignored, score) -> 0);
+        return true;
     }
 
     public int penalize(UUID playerId, int percent) {
@@ -63,6 +72,7 @@ public final class HuntSession {
         scores.clear();
         returnLocations.clear();
         pausedPlayers.clear();
+        disqualifiedPlayers.clear();
         state = HuntState.IDLE;
         manual = false;
         databaseId = 0;

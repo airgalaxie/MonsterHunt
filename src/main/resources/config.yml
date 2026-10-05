@@ -76,6 +76,10 @@ hunt:
   # Percentage deducted from the current score on death.
   death-penalty-percent: 30
 
+  # DISQUALIFY: Sleeping during a running hunt sets the score to zero and excludes the player.
+  # NONE: Sleeping has no effect on the hunt result.
+  sleep-penalty: DISQUALIFY
+
   # Announces server-wide when a player takes the sole lead.
   announce-lead: true
 
@@ -183,6 +187,7 @@ messages:
   not-enough-players: '<yellow>Die Monsterjagd findet wegen zu weniger Teilnehmer nicht statt.</yellow>'
   score: '<gray><mob>: <green>+<points></green> Punkte, Gesamt: <total></gray>'
   death: '<red>Durch deinen Tod wurden <percent>% deiner Punkte abgezogen.</red>'
+  sleep-disqualified: '<red>Du wurdest für diese Monsterjagd disqualifiziert, weil du geschlafen hast.</red>'
   lead: '<gold><player> führt jetzt mit <points> Punkten.</gold>'
   no-permission: '<red>Dazu hast du keine Berechtigung.</red>'
   no-hunt: '<yellow>In dieser Welt läuft keine Monsterjagd.</yellow>'

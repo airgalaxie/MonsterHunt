@@ -1,5 +1,6 @@
 package de.airgalaxie.monsterhuntreloaded;
 
+import io.papermc.paper.event.player.PlayerDeepSleepEvent;
 import org.bukkit.Location;
 import org.bukkit.entity.Enemy;
 import org.bukkit.entity.LivingEntity;
@@ -8,6 +9,7 @@ import org.bukkit.entity.Projectile;
 import org.bukkit.entity.Slime;
 import org.bukkit.entity.Wolf;
 import org.bukkit.event.EventHandler;
+import org.bukkit.event.EventPriority;
 import org.bukkit.event.Listener;
 import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
@@ -31,6 +33,18 @@ public final class HuntListener implements Listener {
     @EventHandler
     public void onJoin(PlayerJoinEvent event) {
         plugin.hunts().resume(event.getPlayer());
+    }
+
+    @EventHandler(priority = EventPriority.MONITOR, ignoreCancelled = true)
+    public void onDeepSleep(PlayerDeepSleepEvent event) {
+        if (!"DISQUALIFY".equalsIgnoreCase(plugin.getConfig().getString("hunt.sleep-penalty", "DISQUALIFY"))) return;
+        Player player = event.getPlayer();
+        HuntSession session = plugin.hunts().session(player.getWorld());
+        if (session == null || session.state() != HuntState.RUNNING
+                || !session.worldId().equals(player.getWorld().getUID())) return;
+        if (session.disqualify(player.getUniqueId())) {
+            plugin.messages().send(player, "sleep-disqualified");
+        }
     }
 
     @EventHandler(ignoreCancelled = true)

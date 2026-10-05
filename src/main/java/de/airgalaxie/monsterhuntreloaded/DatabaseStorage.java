@@ -26,12 +26,13 @@ import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.logging.Level;
 
 /** Single SQLite persistence boundary. All methods are serialized on the connection. */
 public final class DatabaseStorage implements AutoCloseable {
-    private static final int SCHEMA_VERSION = 1;
+    private static final int SCHEMA_VERSION = 2;
     private static final DateTimeFormatter BACKUP_TIME =
             DateTimeFormatter.ofPattern("uuuu-MM-dd_HHmmss").withZone(ZoneId.systemDefault());
 
@@ -146,14 +147,26 @@ public final class DatabaseStorage implements AutoCloseable {
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS schema_version (version INTEGER PRIMARY KEY, applied_at TEXT NOT NULL, description TEXT NOT NULL)");
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS players (player_uuid TEXT PRIMARY KEY, last_name TEXT, first_seen_at TEXT NOT NULL, last_seen_at TEXT NOT NULL)");
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS hunts (hunt_id INTEGER PRIMARY KEY AUTOINCREMENT, world_uuid TEXT NOT NULL, world_name TEXT, started_at TEXT NOT NULL, ended_at TEXT, start_type TEXT NOT NULL, completion_state TEXT NOT NULL, participant_count INTEGER NOT NULL DEFAULT 0, metadata_json TEXT)");
-            statement.executeUpdate("CREATE TABLE IF NOT EXISTS hunt_results (hunt_id INTEGER NOT NULL, player_uuid TEXT NOT NULL, score INTEGER NOT NULL, placement INTEGER, joined_at TEXT, finished_at TEXT, PRIMARY KEY(hunt_id, player_uuid), FOREIGN KEY(hunt_id) REFERENCES hunts(hunt_id) ON DELETE CASCADE, FOREIGN KEY(player_uuid) REFERENCES players(player_uuid))");
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS hunt_results (hunt_id INTEGER NOT NULL, player_uuid TEXT NOT NULL, score INTEGER NOT NULL, placement INTEGER, disqualified INTEGER NOT NULL DEFAULT 0, joined_at TEXT, finished_at TEXT, PRIMARY KEY(hunt_id, player_uuid), FOREIGN KEY(hunt_id) REFERENCES hunts(hunt_id) ON DELETE CASCADE, FOREIGN KEY(player_uuid) REFERENCES players(player_uuid))");
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS pending_actions (action_id INTEGER PRIMARY KEY AUTOINCREMENT, player_uuid TEXT NOT NULL, action_type TEXT NOT NULL, world_uuid TEXT, x REAL, y REAL, z REAL, yaw REAL, pitch REAL, reward_place INTEGER, created_at TEXT NOT NULL, completed_at TEXT, attempts INTEGER NOT NULL DEFAULT 0, last_error TEXT, FOREIGN KEY(player_uuid) REFERENCES players(player_uuid))");
             statement.executeUpdate("CREATE TABLE IF NOT EXISTS kill_events (event_id INTEGER PRIMARY KEY AUTOINCREMENT, hunt_id INTEGER NOT NULL, player_uuid TEXT NOT NULL, entity_key TEXT NOT NULL, points INTEGER NOT NULL, occurred_at TEXT NOT NULL, FOREIGN KEY(hunt_id) REFERENCES hunts(hunt_id) ON DELETE CASCADE, FOREIGN KEY(player_uuid) REFERENCES players(player_uuid))");
             statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_hunt_results_player ON hunt_results(player_uuid)");
             statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_hunt_results_score ON hunt_results(score DESC)");
             statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_hunts_started ON hunts(started_at DESC)");
             statement.executeUpdate("CREATE INDEX IF NOT EXISTS idx_pending_player ON pending_actions(player_uuid, completed_at)");
-            statement.executeUpdate("INSERT OR IGNORE INTO schema_version(version, applied_at, description) VALUES(" + SCHEMA_VERSION + ", '" + Instant.now() + "', 'Initial SQLite schema')");
+            statement.executeUpdate("INSERT OR IGNORE INTO schema_version(version, applied_at, description) VALUES(1, '" + Instant.now() + "', 'Initial SQLite schema')");
+            if (!hasColumn("hunt_results", "disqualified")) {
+                statement.executeUpdate("ALTER TABLE hunt_results ADD COLUMN disqualified INTEGER NOT NULL DEFAULT 0");
+            }
+            statement.executeUpdate("INSERT OR IGNORE INTO schema_version(version, applied_at, description) VALUES(" + SCHEMA_VERSION + ", '" + Instant.now() + "', 'Add hunt result disqualification')");
+        }
+    }
+
+    private boolean hasColumn(String table, String column) throws SQLException {
+        try (Statement statement = connection.createStatement();
+             ResultSet result = statement.executeQuery("PRAGMA table_info(" + table + ")")) {
+            while (result.next()) if (column.equalsIgnoreCase(result.getString("name"))) return true;
+            return false;
         }
     }
 
@@ -193,23 +206,26 @@ public final class DatabaseStorage implements AutoCloseable {
         }
     }
 
-    public synchronized void completeHunt(long huntId, Map<UUID, Integer> scores,
+    public synchronized void completeHunt(long huntId, Map<UUID, Integer> scores, Set<UUID> disqualifiedPlayers,
                                           Map<UUID, Integer> placements, Map<UUID, String> names,
                                           Map<UUID, Integer> pendingRewards,
                                           Map<UUID, Location> pendingReturns, boolean completed) {
         try {
             connection.setAutoCommit(false);
-            for (Map.Entry<UUID, Integer> entry : scores.entrySet()) {
+            Map<UUID, Integer> results = new LinkedHashMap<>(scores);
+            disqualifiedPlayers.forEach(playerId -> results.put(playerId, 0));
+            for (Map.Entry<UUID, Integer> entry : results.entrySet()) {
                 UUID playerId = entry.getKey();
                 upsertPlayer(playerId, names.get(playerId));
                 try (PreparedStatement result = connection.prepareStatement(
-                        "INSERT OR REPLACE INTO hunt_results(hunt_id,player_uuid,score,placement,finished_at) VALUES(?,?,?,?,?)")) {
+                        "INSERT OR REPLACE INTO hunt_results(hunt_id,player_uuid,score,placement,disqualified,finished_at) VALUES(?,?,?,?,?,?)")) {
                     result.setLong(1, huntId);
                     result.setString(2, playerId.toString());
                     result.setInt(3, entry.getValue());
                     Integer place = placements.get(playerId);
                     if (place == null) result.setNull(4, java.sql.Types.INTEGER); else result.setInt(4, place);
-                    result.setString(5, Instant.now().toString());
+                    result.setInt(5, disqualifiedPlayers.contains(playerId) ? 1 : 0);
+                    result.setString(6, Instant.now().toString());
                     result.executeUpdate();
                 }
             }
