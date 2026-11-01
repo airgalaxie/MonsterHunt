@@ -15,6 +15,7 @@ import org.bukkit.event.entity.EntityDamageByEntityEvent;
 import org.bukkit.event.entity.EntityDeathEvent;
 import org.bukkit.event.player.PlayerJoinEvent;
 import org.bukkit.event.player.PlayerQuitEvent;
+import org.bukkit.Bukkit;
 
 import static de.airgalaxie.monsterhuntreloaded.Messages.text;
 
@@ -92,8 +93,10 @@ public final class HuntListener implements Listener {
         plugin.hunts().recordKill(session, killer, entityKey, points);
         plugin.messages().send(killer, "score", text("mob", entityKey), text("points", points), text("total", total));
         if (plugin.getConfig().getBoolean("hunt.announce-lead", true) && total > oldLead) {
-            plugin.getServer().getOnlinePlayers().forEach(player -> plugin.messages().send(player, "lead",
-                    text("player", killer.getName()), text("points", total)));
+            // Meldung an alle Spieler ersetzen durch cmi bossbar:
+            // plugin.getServer().getOnlinePlayers().forEach(player -> plugin.messages().send(player, "lead", text("player", killer.getName()), text("points", total)));
+	        String leadAnnounce = killer.getName() + " führt jetzt mit: " + total + " Punkten!";
+	        Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "cmi bossbarmsg all -t:0.2 " + leadAnnounce);
         }
     }
 
