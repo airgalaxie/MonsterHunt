@@ -47,9 +47,8 @@ public final class RewardService {
                 getServer().broadcast(Component.text("=== Monsterhunt Endstand ===")
                         .color(NamedTextColor.GRAY)
                         .decoration(TextDecoration.UNDERLINED, false));
-            }
-            // String printedResult = place + ". " + player.getName() + "\t " + lastScore + " Punkte";
-            // %d = Platzierung, %-16s = Name (linksbündig auf 16 Zeichen aufgefüllt), %d = Punkte
+            }            
+            // Endresultat: %d = Platzierung, %-16s = Name (linksbündig auf 16 Zeichen aufgefüllt), %d = Punkte
             String printedResult = String.format("%d. %-16s %d Punkte", place, player.getName(), lastScore);
             getServer().broadcast(Component.text(printedResult).color(NamedTextColor.GREEN));
         }
