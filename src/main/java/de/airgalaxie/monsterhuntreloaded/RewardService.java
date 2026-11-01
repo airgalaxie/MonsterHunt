@@ -1,5 +1,8 @@
 package de.airgalaxie.monsterhuntreloaded;
 
+import net.kyori.adventure.text.Component;
+import net.kyori.adventure.text.format.NamedTextColor;
+import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -13,6 +16,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
+
+import static org.bukkit.Bukkit.getServer;
 
 public final class RewardService {
     private final MonsterHuntPlugin plugin;
@@ -38,6 +43,15 @@ public final class RewardService {
             Player player = Bukkit.getPlayer(entry.getKey());
             if (player != null) givePlace(player, place);
             results.add(new Result(place, entry.getKey(), entry.getValue()));
+            if (place == 1) {
+                getServer().broadcast(Component.text("=== Monsterhunt Endstand ===")
+                        .color(NamedTextColor.GRAY)
+                        .decoration(TextDecoration.UNDERLINED, false));
+            }
+            // String printedResult = place + ". " + player.getName() + "\t " + lastScore + " Punkte";
+            // %d = Platzierung, %-16s = Name (linksbündig auf 16 Zeichen aufgefüllt), %d = Punkte
+            String printedResult = String.format("%d. %-16s %d Punkte", place, player.getName(), lastScore);
+            getServer().broadcast(Component.text(printedResult).color(NamedTextColor.GREEN));
         }
         return results;
     }
