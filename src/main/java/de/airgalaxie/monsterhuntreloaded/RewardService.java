@@ -33,7 +33,6 @@ public final class RewardService {
         List<Result> results = new ArrayList<>();
         int maximumPlaces = plugin.getConfig().getInt("rewards.winners", 3);
         int place = 0;
-        String printedResult = " ";
         int lastScore = Integer.MIN_VALUE;
         for (Map.Entry<UUID, Integer> entry : ordered) {
             if (entry.getValue() != lastScore) place++;
@@ -42,9 +41,7 @@ public final class RewardService {
             int minimum = plugin.getConfig().getInt("rewards.places." + place + ".minimum-points", 1);
             if (entry.getValue() < minimum) continue;
             Player player = Bukkit.getPlayer(entry.getKey());
-            if (player != null) {
-                givePlace(player, place);
-            }
+            if (player != null) givePlace(player, place);
             results.add(new Result(place, entry.getKey(), entry.getValue()));
             if (place == 1) {
                 getServer().broadcast(Component.text("=== Monsterhunt Endstand ===")
@@ -53,12 +50,7 @@ public final class RewardService {
             }
             // String printedResult = place + ". " + player.getName() + "\t " + lastScore + " Punkte";
             // %d = Platzierung, %-16s = Name (linksbündig auf 16 Zeichen aufgefüllt), %d = Punkte
-            if (player != null) {
-                printedResult = String.format("%d. %-16s %d Punkte", place, player.getName(), lastScore);
-            } else {
-                String offlineName = "(offline player)";
-                printedResult = String.format("%d. %-16s %d Punkte", place, offlineName, lastScore);
-            }
+            String printedResult = String.format("%d. %-16s %d Punkte", place, player.getName(), lastScore);
             getServer().broadcast(Component.text(printedResult).color(NamedTextColor.GREEN));
         }
         return results;
