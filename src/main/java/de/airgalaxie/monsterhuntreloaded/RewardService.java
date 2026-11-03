@@ -2,7 +2,6 @@ package de.airgalaxie.monsterhuntreloaded;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -34,22 +33,29 @@ public final class RewardService {
         int maximumPlaces = plugin.getConfig().getInt("rewards.winners", 3);
         int place = 0;
         int lastScore = Integer.MIN_VALUE;
+        // make a headline
+        getServer().broadcast(Component.text("=== Monsterhunt final result ===").color(NamedTextColor.GRAY));
+
         for (Map.Entry<UUID, Integer> entry : ordered) {
+            String printedResult;       // for posting results
             if (entry.getValue() != lastScore) place++;
             if (place > maximumPlaces) break;
             lastScore = entry.getValue();
             int minimum = plugin.getConfig().getInt("rewards.places." + place + ".minimum-points", 1);
             if (entry.getValue() < minimum) continue;
             Player player = Bukkit.getPlayer(entry.getKey());
-            if (player != null) givePlace(player, place);
+
+            if (player != null) {
+                givePlace(player, place);
+                // %d = Platzierung, %-16s = Name (linksbündig auf 16 Zeichen aufgefüllt), %d = Punkte
+                printedResult = String.format("%d. %-16s %d Punkte", place, player.getName(), lastScore);
+            } else {
+                // give offline players a name because player.getName() fails when offline and loop becomes infinite
+                printedResult = String.format("%d. %-16s %d Punkte", place, "player offline", lastScore);
+            }
+
             results.add(new Result(place, entry.getKey(), entry.getValue()));
-            if (place == 1) {
-                getServer().broadcast(Component.text("=== Monsterhunt Endstand ===")
-                        .color(NamedTextColor.GRAY)
-                        .decoration(TextDecoration.UNDERLINED, false));
-            }            
-            // Endresultat: %d = Platzierung, %-16s = Name (linksbündig auf 16 Zeichen aufgefüllt), %d = Punkte
-            String printedResult = String.format("%d. %-16s %d Punkte", place, player.getName(), lastScore);
+            // print the line (will be received by players and log)
             getServer().broadcast(Component.text(printedResult).color(NamedTextColor.GREEN));
         }
         return results;
