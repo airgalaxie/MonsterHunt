@@ -2,7 +2,6 @@ package de.airgalaxie.monsterhuntreloaded;
 
 import net.kyori.adventure.text.Component;
 import net.kyori.adventure.text.format.NamedTextColor;
-import net.kyori.adventure.text.format.TextDecoration;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
@@ -35,7 +34,7 @@ public final class RewardService {
         int place = 0;
         int lastScore = Integer.MIN_VALUE;
         // make a headline
-        getServer().broadcast(Component.text("=== Monsterhunt Endstand ===").color(NamedTextColor.GRAY));
+        getServer().broadcast(Component.text("=== Monsterhunt final result ===").color(NamedTextColor.GRAY));
 
         for (Map.Entry<UUID, Integer> entry : ordered) {
             String printedResult;       // for posting results
